@@ -102,7 +102,7 @@ class ContactStream(Stream):
 
             LOGGER.info("... {} results".format(len(results)))
 
-            #if len(results) == 0:
-            hasMore = False
+            if len(results) == 0:
+                hasMore = False
 
         LOGGER.info("Done syncing contacts.")
