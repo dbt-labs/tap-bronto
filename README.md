@@ -8,7 +8,11 @@ It:
 
 - Generates a catalog of available data in Bronto
 - Extracts the following resources:
-  - [Contacts](http://dev.bronto.com/api/soap/functions/read/readcontacts/) ([source](../blob/master/tap_bronto/endpoints/contact.py))
+  - [Contacts](http://dev.bronto.com/api/soap/functions/read/readcontacts/) ([source](/tap_bronto/endpoints/contact.py))
+  - [InboundActivityStream](http://dev.bronto.com/api/soap/functions/read/readrecentinboundactivities/) ([source](/tap_bronto/endpoints/inbound_activity.py))
+  - [OutboundActivityStream](http://dev.bronto.com/api/soap/functions/read/readrecentoutboundactivities/) ([source](/tap_bronto/endpoints/outbound_activity.py))
+  - [Lists](http://dev.bronto.com/api/soap/functions/read/readlists/) ([source](/tap_bronto/endpoints/list.py))
+  - [Unsubscribes](http://dev.bronto.com/api/soap/functions/read/readunsubscribes/) ([source](/tap_bronto/endpoints/unsubscribe.py))
 
 ### Quick Start
 
