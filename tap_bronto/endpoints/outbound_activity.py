@@ -5,7 +5,9 @@ from tap_bronto.stream import Stream
 
 from datetime import datetime, timedelta
 from dateutil import parser
+from funcy import identity, project, filter
 
+import hashlib
 import pytz
 import singer
 import suds
@@ -95,6 +97,15 @@ class OutboundActivityStream(Stream):
 
                 parsed_results = [field_selector(result)
                                   for result in result_dicts]
+
+                for result in parsed_results:
+                    ids = ['createdDate', 'activityType', 'contactId',
+                           'listId', 'segmentId', 'keywordId', 'messageId']
+
+                    result['id'] = hashlib.md5(
+                        '|'.join(filter(identity,
+                                        project(result, ids).values()))
+                        .encode('utf-8')).hexdigest()
 
                 singer.write_records(table, parsed_results)
 

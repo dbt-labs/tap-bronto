@@ -21,7 +21,7 @@ class Stream:
 
     def login(self):
         try:
-            client = suds.client.Client(BRONTO_WSDL)
+            client = suds.client.Client(BRONTO_WSDL, timeout=3600)
             session_id = client.service.login(
                 self.config.get('token'))
             session_header = client.factory.create('sessionHeader')

@@ -48,6 +48,13 @@ def get_field_selector(schema):
 
 
 ACTIVITY_SCHEMA = with_properties({
+    'id': {
+        'type': ['string'],
+        'description': ('Manufactured unique ID for the activity.'),
+        'metadata': {
+            'inclusion': 'automatic',
+        },
+    },
     'createdDate': {
         'type': ['string'],
         'description': ('The date the activity was recorded.'),

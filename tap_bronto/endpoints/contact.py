@@ -4,6 +4,7 @@ from tap_bronto.stream import Stream
 from funcy import project
 
 import singer
+import socket
 import suds
 
 LOGGER = singer.get_logger()  # noqa
@@ -70,19 +71,30 @@ class ContactStream(Stream):
             LOGGER.info('Including engagement data.')
 
         while hasMore:
+            retry_count = 0
+
             self.login()
 
-            LOGGER.info("... page {}".format(pageNumber))
-            results = self.client.service.readContacts(
-                filter=1,
-                includeLists=True,
-                fields=[],
-                pageNumber=pageNumber,
-                includeSMSKeywords=True,
-                includeGeoIpData=includeGeoIpData,
-                includeTechnologyData=includeTechnologyData,
-                includeRFMData=includeRFMData,
-                includeEngagementData=includeEngagementData)
+            try:
+                LOGGER.info("... page {}".format(pageNumber))
+                results = self.client.service.readContacts(
+                    filter=1,
+                    includeLists=True,
+                    fields=[],
+                    pageNumber=pageNumber,
+                    includeSMSKeywords=True,
+                    includeGeoIpData=includeGeoIpData,
+                    includeTechnologyData=includeTechnologyData,
+                    includeRFMData=includeRFMData,
+                    includeEngagementData=includeEngagementData)
+
+            except socket.timeout:
+                retry_count += 1
+                if retry_count >= 5:
+                    LOGGER.error("Retried more than five times, moving on!")
+                    raise
+                LOGGER.warn("Timeout caught, retrying request")
+                continue
 
             pageNumber = pageNumber + 1
 
