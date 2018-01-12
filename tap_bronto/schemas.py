@@ -85,8 +85,7 @@ ACTIVITY_SCHEMA = with_properties({
                         'the delivery associated with the '
                         'activity was sent to.'),
         'metadata': {
-            'inclusion': 'available',
-            'selected-by-default': False,
+            'inclusion': 'automatic'
         }
     },
     'segmentId': {
@@ -95,8 +94,7 @@ ACTIVITY_SCHEMA = with_properties({
                         'the delivery associated with the activity '
                         'was sent to.'),
         'metadata': {
-            'inclusion': 'available',
-            'selected-by-default': False,
+            'inclusion': 'automatic'
         }
     },
     'keywordId': {
@@ -105,8 +103,7 @@ ACTIVITY_SCHEMA = with_properties({
                         'the SMS delivery associated with the '
                         'activity was sent to.'),
         'metadata': {
-            'inclusion': 'available',
-            'selected-by-default': False,
+            'inclusion': 'automatic'
         }
     },
     'messageId': {
@@ -114,8 +111,7 @@ ACTIVITY_SCHEMA = with_properties({
         'description': ('The ID assigned to the message associated '
                         'with the activity.'),
         'metadata': {
-            'inclusion': 'available',
-            'selected-by-default': False,
+            'inclusion': 'automatic'
         }
     },
     'deliveryId': {

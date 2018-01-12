@@ -63,7 +63,7 @@ class OutboundActivityStream(Stream):
 
         start = self.get_start_time()
         end = start
-        interval = timedelta(hours=6)
+        interval = timedelta(hours=1)
 
         LOGGER.info('Syncing outbound activities.')
 
