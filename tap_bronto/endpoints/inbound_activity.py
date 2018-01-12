@@ -16,7 +16,7 @@ LOGGER = singer.get_logger()  # noqa
 class InboundActivityStream(Stream):
 
     TABLE = 'inbound_activity'
-    KEY_PROPERTIES = ['id']
+    KEY_PROPERTIES = ['contactId', 'createdDate', 'activityType']
     SCHEMA = ACTIVITY_SCHEMA
 
     def make_filter(self, start, end):
