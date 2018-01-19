@@ -14,20 +14,12 @@ LOGGER = singer.get_logger()  # noqa
 class UnsubscribeStream(Stream):
 
     TABLE = 'unsubscribe'
-    KEY_PROPERTIES = ['contactId', 'deliveryId']
+    KEY_PROPERTIES = ['contactId', 'method', 'created']
     SCHEMA = with_properties({
         'contactId': {
             'type': ['string'],
             'description': ('The unique ID of the contact associated '
                             'with the unsubscribe.'),
-            'metadata': {
-                'inclusion': 'automatic',
-            },
-        },
-        'deliveryId': {
-            'type': ['string'],
-            'description': ('The unique ID of the delivery that '
-                            'resulted in the contact unsubscribing.'),
             'metadata': {
                 'inclusion': 'automatic',
             },
@@ -40,9 +32,17 @@ class UnsubscribeStream(Stream):
                             'fbl (Feedback loop), complaint, '
                             'account, api'),
             'metadata': {
+                'inclusion': 'automatic',
+            }
+        },
+        'deliveryId': {
+            'type': ['null', 'string'],
+            'description': ('The unique ID of the delivery that '
+                            'resulted in the contact unsubscribing.'),
+            'metadata': {
                 'inclusion': 'available',
                 'selected-by-default': False,
-            }
+            },
         },
         'complaint': {
             'type': ['null', 'string'],
@@ -78,8 +78,6 @@ class UnsubscribeStream(Stream):
             key_properties=key_properties)
 
         start = self.get_start_date(table)
-
-        start = start - timedelta(days=3)
         end = start
         interval = timedelta(hours=6)
 

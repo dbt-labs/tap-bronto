@@ -89,7 +89,7 @@ class ContactStream(Stream):
 
         start = self.get_start_date(table)
         end = start
-        interval = timedelta(days=1)
+        interval = timedelta(hours=6)
 
         def flatten(item):
             read_only_data = item.get('readOnlyContactData', {})
@@ -142,11 +142,11 @@ class ContactStream(Stream):
 
                 flattened = [flatten(result) for result in result_dicts]
 
+                LOGGER.info("... {} results".format(len(flattened)))
+
                 singer.write_records(
                     table,
                     [field_selector(result) for result in flattened])
-
-                LOGGER.info("... {} results".format(len(results)))
 
                 if len(results) == 0:
                     hasMore = False
