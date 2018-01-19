@@ -1,10 +1,8 @@
 from tap_bronto.schemas import with_properties, get_field_selector
-from tap_bronto.state import incorporate, save_state, \
-    get_last_record_value_for_table
+from tap_bronto.state import incorporate, save_state
 from tap_bronto.stream import Stream
 
 from datetime import datetime, timedelta
-from dateutil import parser
 
 import pytz
 import singer
@@ -79,14 +77,7 @@ class UnsubscribeStream(Stream):
             self.catalog.get('schema'),
             key_properties=key_properties)
 
-        start = get_last_record_value_for_table(self.state, table)
-
-        if start is None:
-            start_string = self.config.get(
-                'default_start_date',
-                '2017-01-01T00:00:00-00:00')
-
-            start = parser.parse(start_string)
+        start = self.get_start_date(table)
 
         start = start - timedelta(days=3)
         end = start

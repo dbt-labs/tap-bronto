@@ -3,6 +3,9 @@ from tap_bronto.schemas import get_field_selector, is_selected, \
 from tap_bronto.stream import Stream
 from funcy import project
 
+from datetime import datetime, timedelta
+
+import pytz
 import singer
 import socket
 import suds
@@ -15,6 +18,21 @@ class ContactStream(Stream):
     TABLE = 'contact'
     KEY_PROPERTIES = ['id']
     SCHEMA = CONTACT_SCHEMA
+
+    def make_filter(self, start, end):
+        start_filter = self.client.factory.create('dateValue')
+        start_filter.value = start
+        start_filter.operator = 'AfterOrSameDay'
+
+        end_filter = self.client.factory.create('dateValue')
+        end_filter.value = end
+        end_filter.operator = 'Before'
+
+        _filter = self.client.factory.create('contactFilter')
+        _filter.type = 'AND'
+        _filter.modified = [start_filter, end_filter]
+
+        return _filter
 
     def any_selected(self, field_names):
         sub_catalog = project(field_names, self.catalog.get('schema'))
@@ -32,8 +50,6 @@ class ContactStream(Stream):
 
         self.login()
 
-        hasMore = True
-        pageNumber = 1
         field_selector = get_field_selector(
             self.catalog.get('schema'))
 
@@ -56,8 +72,6 @@ class ContactStream(Stream):
             'lastDeliveryDate', 'lastOpenDate', 'lastClickDate'
         ])
 
-        LOGGER.info('Syncing contacts.')
-
         if includeGeoIpData:
             LOGGER.info('Including GEOIP data.')
 
@@ -70,51 +84,76 @@ class ContactStream(Stream):
         if includeEngagementData:
             LOGGER.info('Including engagement data.')
 
-        while hasMore:
-            retry_count = 0
+        LOGGER.info('Syncing contacts.')
 
+        start = self.get_start_date(table)
+        end = start
+        interval = timedelta(days=1)
+
+        def flatten(item):
+            read_only_data = item.get('readOnlyContactData', {})
+            item.pop('readOnlyContactData', None)
+            return {**item, **read_only_data}
+
+        while end < datetime.now(pytz.utc):
             self.login()
+            start = end
+            end = start + interval
+            LOGGER.info("Fetching contacts modified from {} to {}".format(
+                start, end))
 
-            try:
-                LOGGER.info("... page {}".format(pageNumber))
-                results = self.client.service.readContacts(
-                    filter=1,
-                    includeLists=True,
-                    fields=[],
-                    pageNumber=pageNumber,
-                    includeSMSKeywords=True,
-                    includeGeoIpData=includeGeoIpData,
-                    includeTechnologyData=includeTechnologyData,
-                    includeRFMData=includeRFMData,
-                    includeEngagementData=includeEngagementData)
+            _filter = self.make_filter(start, end)
+            field_selector = get_field_selector(
+                self.catalog.get('schema'))
 
-            except socket.timeout:
-                retry_count += 1
-                if retry_count >= 5:
-                    LOGGER.error("Retried more than five times, moving on!")
-                    raise
-                LOGGER.warn("Timeout caught, retrying request")
-                continue
+            pageNumber = 1
+            hasMore = True
 
-            pageNumber = pageNumber + 1
+            while hasMore:
+                retry_count = 0
 
-            result_dicts = [suds.sudsobject.asdict(result)
-                            for result in results]
+                self.login()
 
-            def flatten(item):
-                read_only_data = item.get('readOnlyContactData', {})
-                item.pop('readOnlyContactData', None)
-                return {**item, **read_only_data}
+                try:
+                    results = self.client.service.readContacts(
+                        filter=_filter,
+                        includeLists=True,
+                        fields=[],
+                        pageNumber=pageNumber,
+                        includeSMSKeywords=True,
+                        includeGeoIpData=includeGeoIpData,
+                        includeTechnologyData=includeTechnologyData,
+                        includeRFMData=includeRFMData,
+                        includeEngagementData=includeEngagementData)
 
-            flattened = [flatten(result) for result in result_dicts]
+                except socket.timeout:
+                    retry_count += 1
+                    if retry_count >= 5:
+                        LOGGER.error("Retried more than five times, moving on!")
+                        raise
+                    LOGGER.warn("Timeout caught, retrying request")
+                    continue
 
-            singer.write_records(
-                table,
-                [field_selector(result) for result in flattened])
+                pageNumber = pageNumber + 1
 
-            LOGGER.info("... {} results".format(len(results)))
+                result_dicts = [suds.sudsobject.asdict(result)
+                                for result in results]
 
-            if len(results) == 0:
-                hasMore = False
+                flattened = [flatten(result) for result in result_dicts]
+
+                singer.write_records(
+                    table,
+                    [field_selector(result) for result in flattened])
+
+                LOGGER.info("... {} results".format(len(results)))
+
+                if len(results) == 0:
+                    hasMore = False
+
+            self.state = incorporate(
+                self.state, table, 'modified',
+                start.replace(microsecond=0).isoformat())
+
+            save_state(self.state)
 
         LOGGER.info("Done syncing contacts.")

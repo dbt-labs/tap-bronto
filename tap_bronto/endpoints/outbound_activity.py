@@ -31,24 +31,18 @@ class OutboundActivityStream(Stream):
 
         return _filter
 
-    def get_start_time(self):
-        start = get_last_record_value_for_table(self.state,
-                                                self.TABLE)
+    def get_start_date(self, table):
+        start = super().get_start_date(table)
 
         earliest_available = datetime.now(pytz.utc) - timedelta(days=30)
-
-        if start is None:
-            start_string = self.config.get(
-                'default_start_date',
-                '2017-01-01T00:00:00-00:00')
-
-            start = parser.parse(start_string)
 
         if earliest_available > start:
             LOGGER.warn('Start date before 30 days ago, but Bronto '
                         'only returns the past 30 days of activity. '
                         'Using a start date of -30 days.')
             return earliest_available
+        else:
+            LOGGER.info('Rewinding three days, since activities can change...')
 
         return start - timedelta(days=3)
 
@@ -61,7 +55,7 @@ class OutboundActivityStream(Stream):
             self.catalog.get('schema'),
             key_properties=key_properties)
 
-        start = self.get_start_time()
+        start = self.get_start_date(table)
         end = start
         interval = timedelta(hours=1)
 
