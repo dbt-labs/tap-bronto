@@ -1,5 +1,6 @@
 from tap_bronto.schemas import get_field_selector, is_selected, \
     CONTACT_SCHEMA
+from tap_bronto.state import incorporate, save_state
 from tap_bronto.stream import Stream
 from funcy import project
 
