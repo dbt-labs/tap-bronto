@@ -26,7 +26,7 @@ class Stream:
     def get_start_date(self, table):
         LOGGER.info('Choosing start date for table {}'.format(table))
         default_start_string = self.config.get(
-            'default_start_date',
+            'start_date',
             '2017-01-01T00:00:00-00:00')
         default_start = parser.parse(default_start_string)
 
